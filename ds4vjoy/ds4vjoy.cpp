@@ -1,0 +1,601 @@
+﻿// ds4vjoy.cpp : アプリケーションのエントリ ポイントを定義します。
+//
+
+#include "stdafx.h"
+
+#include "ds4vjoy.h"
+#include "DS4.h"
+#include "vjoy.h"
+#include "Stopwatch.h"
+
+#include "Settings.h"
+#include "Tasktray.h"
+
+#include "Log.h"
+#include "SettingDlg.h"
+#include "MappingDlg.h"
+#include "KeymapDlg.h"
+#include "RapidFireDlg.h"
+
+#define MAX_LOADSTRING 100
+
+// グローバル変数:
+HINSTANCE hInst;                                // 現在のインターフェイス
+WCHAR szTitle[MAX_LOADSTRING];                  // タイトル バーのテキスト
+WCHAR szWindowClass[MAX_LOADSTRING];            // メイン ウィンドウ クラス名
+Settings g_settings;
+
+// このコード モジュールに含まれる関数の宣言を転送します:
+ATOM                MyRegisterClass(HINSTANCE hInstance);
+BOOL                InitInstance(HINSTANCE, int);
+LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
+                     _In_opt_ HINSTANCE hPrevInstance,
+                     _In_ LPWSTR    lpCmdLine,
+                     _In_ int       nCmdShow)
+{
+    UNREFERENCED_PARAMETER(hPrevInstance);
+    UNREFERENCED_PARAMETER(lpCmdLine);
+
+    // TODO: ここにコードを挿入してください。
+
+    // グローバル文字列を初期化しています。
+    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+    LoadStringW(hInstance, IDC_DS4VJOY, szWindowClass, MAX_LOADSTRING);
+    MyRegisterClass(hInstance);
+
+    // アプリケーションの初期化を実行します:
+    if (!InitInstance (hInstance, nCmdShow))
+    {
+        return FALSE;
+    }
+
+    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_DS4VJOY));
+
+    MSG msg;
+
+    // メイン メッセージ ループ:
+    while (GetMessage(&msg, nullptr, 0, 0))
+    {
+        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }
+
+    return (int) msg.wParam;
+}
+
+
+
+//
+//  関数: MyRegisterClass()
+//
+//  目的: ウィンドウ クラスを登録します。
+//
+ATOM MyRegisterClass(HINSTANCE hInstance)
+{
+    WNDCLASSEXW wcex;
+
+    wcex.cbSize = sizeof(WNDCLASSEX);
+
+	wcex.style = 0;// CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = WndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = hInstance;
+    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DS4VJOY));
+    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
+	wcex.lpszMenuName = 0;// MAKEINTRESOURCEW(IDC_DS4VJOY);
+    wcex.lpszClassName  = szWindowClass;
+    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_DS4VJOY_S));
+
+    return RegisterClassExW(&wcex);
+}
+
+//
+//   関数: InitInstance(HINSTANCE, int)
+//
+//   目的: インスタンス ハンドルを保存して、メイン ウィンドウを作成します。
+//
+//   コメント:
+//
+//        この関数で、グローバル変数でインスタンス ハンドルを保存し、
+//        メイン プログラム ウィンドウを作成および表示します。
+//
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+{
+   hInst = hInstance; // グローバル変数にインスタンス処理を格納します。
+
+   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT, 0, 486, 300, nullptr, nullptr, hInstance, nullptr);
+
+   if (!hWnd)
+   {
+      return FALSE;
+   }
+
+   ShowWindow(hWnd, nCmdShow);
+   if (nCmdShow== SW_SHOWMINNOACTIVE) {
+	   SendMessage(hWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+   }
+   UpdateWindow(hWnd);
+
+   return TRUE;
+}
+
+//
+//  関数: WndProc(HWND, UINT, WPARAM, LPARAM)
+//
+//  目的:    メイン ウィンドウのメッセージを処理します。
+//
+//  WM_COMMAND  - アプリケーション メニューの処理
+//  WM_PAINT    - メイン ウィンドウの描画
+//  WM_DESTROY  - 中止メッセージを表示して戻る
+//
+//
+
+typedef struct _ds4cbParams
+{
+	vJoyDevice *vj;
+	int vJoyDevID;
+	DS4Device *ds4;
+	Mappings mapping;
+	Keymaps keymapdata;
+	std::vector<RapidFire> rapidFires;
+	bool rapidFireflag;
+	DS4Button *splitTouchPad;
+	int splitCol;
+	int splitRow;
+	int splitButton;
+	Stopwatch sw;
+} DS4cbParams;
+
+void ds4inputcb(DS4Device * ds4, BOOL updateflag,void*param) {
+	double now;
+	DS4cbParams *p = (DS4cbParams*)param;
+	p->sw.Lap(&now);
+
+	if (updateflag == false && p->rapidFireflag == false)
+		return;
+
+	vJoyDevice* vjoy = p->vj;
+	vjoy->ClearState();
+
+	//ボタンマッピング
+	size_t n = p->mapping.size();
+	for (int i = 0; i < n; i++) {
+		p->mapping[i].Run();
+	}
+
+	//タッチパッドの分割
+	if (p->splitTouchPad != 0 && p->splitTouchPad->isPushed() ) {
+		for (int idx = 0; idx < 2; idx++) {
+			if (ds4->TouchActive(idx)) {
+				int pos = 0;
+				if (p->splitRow > 0) {
+					pos = ds4->TouchY(idx) / (943 / p->splitRow) * p->splitCol;
+				}
+				if (p->splitCol > 0) {
+					pos += ds4->TouchX(idx) / (1920 / p->splitCol);
+				}
+				if (p->splitButton - 1 + pos < 128) {
+					vjoy->GetButton((vJoyButtonID)(vJoyButton::Button1 + p->splitButton - 1 + pos))->SetVal(1);
+				}
+			}
+		}
+	}
+	
+	//連射
+	{
+		bool flag=false;
+		size_t max = p->rapidFires.size();
+		for (int i = 0; i < max; i++) {
+			if (p->rapidFires[i].Run(now)) {
+				flag = true;
+			}
+		}
+		p->rapidFireflag = flag;
+	}
+
+	//ボタンが押されたらキーを送信
+	size_t max = p->keymapdata.size();
+	for (int i = 0; i < max; i++) {
+		p->keymapdata[i].Run();
+	}
+
+	vjoy->Update();
+
+}
+
+//手抜き振動処理
+int TwosCompWord2Int(WORD in)
+{
+	int tmp;
+	WORD inv = ~in;
+	BOOL isNeg = in >> 15;
+	if (isNeg)
+	{
+		tmp = (int)(inv);
+		tmp = -1 * tmp;
+		return tmp - 1;
+	}
+	else
+		return (int)in;
+}
+void CALLBACK ffbCallback(PVOID data, PVOID userdata)
+{
+	DS4cbParams *p = (DS4cbParams*)userdata;
+	int devid;
+	if (ERROR_SUCCESS != Ffb_h_DeviceID((FFB_DATA *)data, &devid))
+		return;
+	if (devid != p->vJoyDevID)
+		return;
+
+	FFB_EFF_CONSTANT ConstantEffect;
+	if (ERROR_SUCCESS != Ffb_h_Eff_Constant((FFB_DATA *)data, &ConstantEffect))
+		return;
+
+	ConstantEffect.Magnitude = TwosCompWord2Int((WORD)ConstantEffect.Magnitude);
+
+	if (ConstantEffect.Magnitude < 0) {
+		ConstantEffect.Magnitude = -ConstantEffect.Magnitude;
+	}
+
+	static int lastMagnitude = 10001;
+	if (lastMagnitude == ConstantEffect.Magnitude)
+		return;
+	lastMagnitude = ConstantEffect.Magnitude;
+
+	if (p->ds4->Active()) {
+		BYTE motor = (BYTE) ((double)ConstantEffect.Magnitude / 10000.0 * 255);
+		p->ds4->SetMoter(motor, motor);
+		p->ds4->Write();
+	}
+}
+
+
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	static DS4Device ds4;
+	static vJoyDevice vjoy;
+	static HWND hTab;
+	static HWND hStatus;
+	static COLORREF ledcolor;
+	static Tasktray tasktray;
+	static LogDlg lDlg;
+	static SettingDlg sDlg;
+	static MappingDlg mDlg;
+	static RapidFireDlg rDlg;
+	static KeymapDlg kDlg;
+	static DS4cbParams cbParams;
+    switch (message)
+    {
+    case WM_COMMAND:
+        {
+            int wmId = LOWORD(wParam);
+            // 選択されたメニューの解析:
+            switch (wmId)
+            {
+            case IDM_ABOUT:
+                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+                break;
+            case IDM_EXIT:
+                DestroyWindow(hWnd);
+                break;
+            default:
+                return DefWindowProc(hWnd, message, wParam, lParam);
+            }
+        }
+        break;
+	case WM_CREATE:
+		InitCommonControls();
+		g_settings.OpenIni(L"ds4vjoy.ini");
+		g_settings.Load();
+		lDlg.Init(hInst, hWnd);
+		sDlg.Init(hInst, hWnd);
+		kDlg.Init(hInst, hWnd);
+		mDlg.Init(hInst, hWnd);
+		rDlg.Init(hInst, hWnd);
+		tasktray.Init(hInst, hWnd);
+		cbParams.vj = &vjoy;
+		cbParams.ds4 = &ds4;
+
+		{//タブ
+			hTab = CreateWindowEx(0, WC_TABCONTROL, NULL, WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | TCS_RIGHTJUSTIFY, 0, 0, 10, 10, hWnd, (HMENU)ID_TABMENU, hInst, NULL);
+			TCITEM tc_item;
+			tc_item.mask = TCIF_TEXT;
+			tc_item.pszText = L"Log";
+			TabCtrl_InsertItem(hTab, 0, &tc_item);
+			tc_item.pszText = L"Settings";
+			TabCtrl_InsertItem(hTab, 1, &tc_item);
+			tc_item.pszText = L"Mapping";
+			TabCtrl_InsertItem(hTab, 2, &tc_item);
+			tc_item.pszText = L"RapidFire";
+			TabCtrl_InsertItem(hTab, 3, &tc_item);
+			tc_item.pszText = L"Keymap";
+			TabCtrl_InsertItem(hTab, 4, &tc_item);
+		}
+
+		//ステータスバー
+		{
+			hStatus = CreateStatusWindow(WS_CHILD | WS_VISIBLE | CCS_BOTTOM | SBARS_SIZEGRIP, NULL, hWnd, ID_STATUS);
+			int width[3] = { 100,200,-1 };
+			SendMessage(hStatus, SB_SETPARTS, 3, (LPARAM)width);
+			SendMessage(hStatus, SB_SETTEXT, 0 | 0, (WPARAM)L"待機");
+		}
+
+		LogPrintf(L"DS4vJoy Ver1.0");
+
+		//vjoy初期化
+		if (!vjoy.Init(hWnd)) {
+			return -1;
+		}
+
+		//デバイスオープン
+		if (!SendMessage(hWnd, WM_DEVICE_VJOY_START, 0, 0)) {
+			LogPrintf(L"有効なvJoyデバイスが見つかるまで待機しています。");
+		}else if (!SendMessage(hWnd, WM_DEVICE_DS4_START, 0, 0)) {
+			LogPrintf(L"有効なDS4が見つかるまで待機しています。");
+		}
+
+		//デバイスのチェック間隔
+		SetTimer(hWnd, 1, 10000, NULL);
+		//ステータス更新間隔
+		SetTimer(hWnd, 2, 1000, NULL);
+
+		break;
+	case WM_TIMER:
+		if (wParam == 1) {
+			if (!vjoy.Active() ) {
+				SendMessage(hWnd, WM_DEVICE_VJOY_START, 0, 0);
+			}
+			if (!ds4.Active() ) {
+				SendMessage(hWnd, WM_DEVICE_DS4_START, 0, 0);
+			}
+		}
+		else if (wParam == 2) {
+
+			TCHAR buf[20];
+			if (ds4.Active()) {
+				if (ds4.isBT()) {
+					wsprintf(buf, TEXT("BT(%d%%)"), ds4.Battery() * 10);
+				}
+				else {
+					wsprintf(buf, TEXT("USB(%d%%)"), ds4.Battery() * 10);
+				}
+				SendMessage(hStatus, SB_SETTEXT, 0, (WPARAM)buf);
+				swprintf_s(buf, TEXT("%0.2fms"), cbParams.sw.GetAvg());
+				SendMessage(hStatus, SB_SETTEXT, 1, (WPARAM)buf);
+			}
+			else {
+				SendMessage(hStatus, SB_SETTEXT, 0 | 0, (WPARAM)L"未接続");
+				SendMessage(hStatus, SB_SETTEXT, 1 | 0, (WPARAM)L"");
+			}
+			if (ledcolor != g_settings.LED_Color) {
+				ledcolor = g_settings.LED_Color;
+				ds4.SetLED(GetRValue(ledcolor), GetGValue(ledcolor), GetBValue(ledcolor));
+				if(ds4.Active())
+					ds4.Write();
+			}
+		}
+		break;
+	case WM_DEVICE_VJOY_START:
+		if (g_settings.Tasktray) {
+			tasktray.Show();
+		}
+		else {
+			tasktray.Hide();
+		}
+		vjoy.Close();
+		if (vjoy.Open(g_settings.vJoyDeviceID)) {
+			cbParams.vJoyDevID = g_settings.vJoyDeviceID;
+			if (g_settings.FFB) {
+				vjoy.SetFFBCallback(ffbCallback, &cbParams);
+			}
+			else {
+				vjoy.SetFFBCallback(NULL, NULL);
+			}
+			return TRUE;
+		}
+		return FALSE;
+	case WM_DEVICE_DS4_START:{
+		ds4.Close();
+		if (vjoy.Active()) {
+			//Stopwatch初期化
+			cbParams.sw.Reset(100);
+
+			//ds4コールバック登録
+			ds4.SetCallback(ds4inputcb, &cbParams);
+
+			//派手に電飾
+			ledcolor = g_settings.LED_Color;
+			ds4.SetLED(GetRValue(ledcolor), GetGValue(ledcolor), GetBValue(ledcolor));
+
+			//ボタンマッピング
+			{
+				cbParams.mapping.clear();
+				size_t max = g_settings.Mappingdata.size();
+				for (int i = 0; i < max;++i){
+					Mapping *data = &g_settings.Mappingdata[i];
+					if ( data->LoadDevice(&ds4, &vjoy))
+						cbParams.mapping.push_back(*data);
+				}
+			}
+
+			//TouchPadの分割
+			if (g_settings.SplitTouchPad) {
+				cbParams.splitTouchPad = ds4.GetButton(DS4Button::TOUCH);
+				cbParams.splitCol = g_settings.TouchCol;
+				cbParams.splitRow = g_settings.TouchRow;
+				cbParams.splitButton = g_settings.TouchPadButton;
+			}
+			else {
+				cbParams.splitTouchPad = 0;
+			}
+
+			//キーマッピング
+			{
+				cbParams.keymapdata.clear();
+				size_t max = g_settings.Keymapdata.size();
+				for (int i = 0; i < max; ++i) {
+					Keymap *data = &g_settings.Keymapdata[i];
+					if ( data->LoadDevice(&vjoy) )
+						cbParams.keymapdata.push_back(*data);
+				}
+			}
+
+			//連射
+			cbParams.rapidFires.clear();
+			for (auto itr = g_settings.RapidFiredata.begin(); itr != g_settings.RapidFiredata.end(); ++itr) {
+				if (itr->second.LoadDevice(&vjoy))
+					cbParams.rapidFires.push_back(itr->second);
+			}
+			cbParams.rapidFireflag = false;
+
+			//接続DS4指定
+			ds4.SetTargetSerial(g_settings.getSerial());
+
+			return ds4.Open();
+		}
+		return FALSE;
+	}
+	case WM_DEVICECHANGE:
+		if (!vjoy.Active()) {
+			SendMessage(hWnd, WM_DEVICE_VJOY_START, 0, 0);
+		}
+		if (!ds4.Active()) {
+			SendMessage(hWnd, WM_DEVICE_DS4_START, 0, 0);
+		}
+		break;
+	case WM_CHANGE_SETTING:
+		if (ds4.Active()) {
+			LogPrintf(L"設定変更のため再接続します。");
+		}
+		SendMessage(hWnd, WM_DEVICE_VJOY_START, 0, 0);
+		SendMessage(hWnd, WM_DEVICE_DS4_START, 0, 0);
+		
+		break;
+	case WM_ERASEBKGND:
+		return 1;
+	case WM_SIZE:{
+		SendMessage(hStatus, WM_SIZE, wParam, lParam);
+		RECT rc = { 0 }, statusBar;
+		rc.right = LOWORD(lParam);
+		rc.bottom = HIWORD(lParam);
+		GetClientRect(hStatus, &statusBar);
+		rc.bottom -= statusBar.bottom;
+		MoveWindow(hTab, 0, 0, rc.right, rc.bottom, FALSE);
+		TabCtrl_AdjustRect(hTab, FALSE, &rc);
+		rc.bottom -= rc.top;
+		rc.right -= rc.left;
+			
+		lDlg.MoveWindow(rc.left, rc.top, rc.right, rc.bottom, FALSE);
+		sDlg.MoveWindow(rc.left, rc.top, rc.right, rc.bottom, FALSE);
+		kDlg.MoveWindow(rc.left, rc.top, rc.right, rc.bottom, FALSE);
+		mDlg.MoveWindow(rc.left, rc.top, rc.right, rc.bottom, FALSE);
+		rDlg.MoveWindow(rc.left, rc.top, rc.right, rc.bottom, FALSE);
+		InvalidateRect(hWnd, NULL, FALSE);
+		break;
+	}
+	case WM_NOTIFY:
+		switch (((NMHDR *)lParam)->code) {
+		case TCN_SELCHANGING:
+			switch (TabCtrl_GetCurSel(hTab)) {
+			case 0:
+				lDlg.Hide();
+				break;
+			case 1:
+				sDlg.Hide();
+				break;
+			case 2:
+				mDlg.Hide();
+				break;
+			case 3:
+				rDlg.Hide();
+				break;
+			case 4:
+				kDlg.Hide();
+				break;
+			}
+			break;
+		case TCN_SELCHANGE:
+			switch (TabCtrl_GetCurSel(hTab)) {
+			case 0:
+				lDlg.Show();
+				break;
+			case 1:
+				sDlg.Show();
+				break;
+			case 2:
+				mDlg.Show();
+				break;
+			case 3:
+				rDlg.Show();
+				break;
+			case 4:
+				kDlg.Show();
+				break;
+			}
+			break;
+		default:
+			return DefWindowProc(hWnd, message, wParam, lParam);
+		}
+		break;
+	case WM_TASKTRAY:
+		tasktray.Message(wParam, lParam);
+		break;
+    case WM_DESTROY:
+		tasktray.Hide();
+		if(g_settings.DisconnectBT)
+			ds4.DisconnectBT();
+		ds4.Close();
+		vjoy.Close();
+        PostQuitMessage(0);
+        break;
+	case WM_LOGNEW:
+		lDlg.Update();
+		break;
+	case WM_SYSCOMMAND:
+		switch (wParam)
+		{
+		case SC_MINIMIZE:
+			if (g_settings.Tasktray) {
+				tasktray.Show();
+				ShowWindow(hWnd, SW_HIDE);
+				return 0;
+			}
+			break;
+		}
+//		return DefWindowProc(hWnd, message, wParam, lParam);
+//		break;
+    default:
+        return DefWindowProc(hWnd, message, wParam, lParam);
+    }
+    return 0;
+}
+
+// バージョン情報ボックスのメッセージ ハンドラーです。
+INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    UNREFERENCED_PARAMETER(lParam);
+    switch (message)
+    {
+    case WM_INITDIALOG:
+        return (INT_PTR)TRUE;
+
+    case WM_COMMAND:
+        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
+        {
+            EndDialog(hDlg, LOWORD(wParam));
+            return (INT_PTR)TRUE;
+        }
+        break;
+    }
+    return (INT_PTR)FALSE;
+}
