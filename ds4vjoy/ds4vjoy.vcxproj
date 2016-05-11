@@ -187,6 +187,8 @@
     <ClInclude Include="DS4.h" />
     <ClInclude Include="DS4Button.h" />
     <ClInclude Include="ds4vjoy.h" />
+    <ClInclude Include="FFB.h" />
+    <ClInclude Include="ffb\effect.h" />
     <ClInclude Include="Keymap.h" />
     <ClInclude Include="KeymapDataDlg.h" />
     <ClInclude Include="KeymapDlg.h" />
@@ -212,6 +214,10 @@
     <ClCompile Include="DS4.cpp" />
     <ClCompile Include="DS4Button.cpp" />
     <ClCompile Include="ds4vjoy.cpp" />
+    <ClCompile Include="FFB.cpp" />
+    <ClCompile Include="ffb\effect.cpp">
+      <PrecompiledHeaderFile>..\stdafx.h</PrecompiledHeaderFile>
+    </ClCompile>
     <ClCompile Include="Keymap.cpp" />
     <ClCompile Include="KeymapDataDlg.cpp" />
     <ClCompile Include="KeymapDlg.cpp" />

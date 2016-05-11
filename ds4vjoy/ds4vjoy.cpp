@@ -6,6 +6,7 @@
 #include "ds4vjoy.h"
 #include "DS4.h"
 #include "vjoy.h"
+#include "FFB.h"
 #include "Stopwatch.h"
 
 #include "Settings.h"
@@ -153,12 +154,23 @@ typedef struct _ds4cbParams
 	int splitRow;
 	int splitButton;
 	Stopwatch sw;
+	FFB ffb;
+	double ffb_time;
 } DS4cbParams;
 
 void ds4inputcb(DS4Device * ds4, BOOL updateflag,void*param) {
 	double now;
 	DS4cbParams *p = (DS4cbParams*)param;
 	p->sw.Lap(&now);
+	if (p->ffb_time + 3 < now) {//3ms
+		BYTE left, right;
+		if (p->ffb.Calc(&left, &right)) {
+			ds4->SetMoter(left, right);
+			ds4->Write();
+		}
+		p->ffb_time = now;
+	}
+
 
 	if (updateflag == false && p->rapidFireflag == false)
 		return;
@@ -211,53 +223,6 @@ void ds4inputcb(DS4Device * ds4, BOOL updateflag,void*param) {
 	vjoy->Update();
 
 }
-
-//手抜き振動処理
-int TwosCompWord2Int(WORD in)
-{
-	int tmp;
-	WORD inv = ~in;
-	BOOL isNeg = in >> 15;
-	if (isNeg)
-	{
-		tmp = (int)(inv);
-		tmp = -1 * tmp;
-		return tmp - 1;
-	}
-	else
-		return (int)in;
-}
-void CALLBACK ffbCallback(PVOID data, PVOID userdata)
-{
-	DS4cbParams *p = (DS4cbParams*)userdata;
-	int devid;
-	if (ERROR_SUCCESS != Ffb_h_DeviceID((FFB_DATA *)data, &devid))
-		return;
-	if (devid != p->vJoyDevID)
-		return;
-
-	FFB_EFF_CONSTANT ConstantEffect;
-	if (ERROR_SUCCESS != Ffb_h_Eff_Constant((FFB_DATA *)data, &ConstantEffect))
-		return;
-
-	ConstantEffect.Magnitude = TwosCompWord2Int((WORD)ConstantEffect.Magnitude);
-
-	if (ConstantEffect.Magnitude < 0) {
-		ConstantEffect.Magnitude = -ConstantEffect.Magnitude;
-	}
-
-	static int lastMagnitude = 10001;
-	if (lastMagnitude == ConstantEffect.Magnitude)
-		return;
-	lastMagnitude = ConstantEffect.Magnitude;
-
-	if (p->ds4->Active()) {
-		BYTE motor = (BYTE) ((double)ConstantEffect.Magnitude / 10000.0 * 255);
-		p->ds4->SetMoter(motor, motor);
-		p->ds4->Write();
-	}
-}
-
 
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -330,7 +295,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SendMessage(hStatus, SB_SETTEXT, 0 | 0, (WPARAM)L"待機");
 		}
 
-		LogPrintf(L"DS4vJoy Ver1.0");
+		LogPrintf(L"DS4vJoy Ver1.1");
 
 		//vjoy初期化
 		if (!vjoy.Init(hWnd)) {
@@ -396,7 +361,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (vjoy.Open(g_settings.vJoyDeviceID)) {
 			cbParams.vJoyDevID = g_settings.vJoyDeviceID;
 			if (g_settings.FFB) {
-				vjoy.SetFFBCallback(ffbCallback, &cbParams);
+				cbParams.ffb_time = 0;
+				vjoy.SetFFBCallback(cbParams.ffb.callback, &cbParams.ffb);
 			}
 			else {
 				vjoy.SetFFBCallback(NULL, NULL);

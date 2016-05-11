@@ -256,7 +256,6 @@ void DS4Device::InputLoop()
 			LogPrintf(L"通信を開始します。");
 			firstflag = false;
 		}
-		Sleep(1);
 	}
 	m_threadShutdown = true;
 
@@ -270,15 +269,16 @@ void DS4Device::InputLoop()
 void DS4Device::OutputLoop()
 {
 	while (!m_threadShutdown) {
-		if (m_write_count != m_write_count2) {
+		while (m_write_count != m_write_count2) {
 			m_write_count2 = m_write_count;
 			if (!_write()) {
-				break;
+				goto EndOutputLoop;
 			}
 		}
 		std::unique_lock<std::mutex> lk(m_write_mutex);
 		m_write_cv.wait(lk);
 	}
+	EndOutputLoop:
 	m_threadShutdown = true;
 
 }
