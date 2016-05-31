@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "DS4.h"
 #include "Log.h"
+#include "Language.h"
 
 unsigned __stdcall inputloop(void  *v)
 {
@@ -159,10 +160,10 @@ bool DS4Device::Open()
 			wsprintf(m_DS4Serial, L"%02x%02x%02x%02x%02x%02x", buf[6], buf[5], buf[4], buf[3], buf[2], buf[1]);
 		}
 		if (0 != m_TargetSerial[0] && _wcsicmp(m_TargetSerial, m_DS4Serial) != 0) {
-			LogPrintf(L"DualShock4 Serial %s は無視します。", m_DS4Serial);
+			LogPrintf(I18N.SkipController,L"DualShock4", m_DS4Serial);//L"%s Serial %s は無視します。"
 			continue;
 		}
-		LogPrintf(L"DualShock4 Serial %s に接続します…", m_DS4Serial);
+		LogPrintf(I18N.ConnectController, L"DualShock4", m_DS4Serial);
 
 		//送受信バッファ確保
 		m_InputBuf = (BYTE*)malloc(m_inputLen);
@@ -190,7 +191,7 @@ bool DS4Device::Open()
 			break;
 		}
 		else {
-			LogPrintf(L"DS4送受信スレッドを作成出来ませんでした。");
+			LogPrintf(I18N.FailedCreateThread);
 		}
 	}
 	if (detail != 0)
@@ -245,15 +246,15 @@ void DS4Device::InputLoop()
 			break;
 		}
 		if (m_receivedLength == 0) {
-			LogPrintf(L"DS4からの受信を終了します。");
+			LogPrintf(I18N.DisconnectController,L"DualShock4");
 			break;
 		}
 		if (!_parse()) {
-			LogPrintf(L"DS4からのデータ解析に失敗しました。");
+			LogPrintf(I18N.FailedParse, L"DualShock4");
 			break;
 		}
 		if (firstflag) {
-			LogPrintf(L"通信を開始します。");
+			LogPrintf(I18N.ConnectionStarted,L"DualShock4");
 			firstflag = false;
 		}
 	}
@@ -337,7 +338,7 @@ bool DS4Device::_write()
 			switch (errorcode)
 			{
 			default:
-				LogPrintf(L"DS4(BT)への送信に失敗しました。  Error:%d (0x%x)", errorcode, errorcode);
+				LogPrintf(I18N.FailedSendCmd,L"DS4(BT)", errorcode);
 				break;
 			}
 		}
@@ -366,7 +367,7 @@ bool DS4Device::_write()
 	{
 	default:
 		if (!m_threadShutdown&&hDS4Handle != INVALID_HANDLE_VALUE)
-			LogPrintf(L"DS4(USB)への送信に失敗しました。  Error:%d (0x%x)", errorcode, errorcode);
+			LogPrintf(I18N.FailedSendCmd, L"DS4(USB)", errorcode);
 		break;
 	}
 	return false;
@@ -406,13 +407,13 @@ bool DS4Device::_read()
 	DWORD errorcode = GetLastError();
 	switch (errorcode)
 	{
-	case 1167:
+	case ERROR_DEVICE_NOT_CONNECTED:
 		if (!m_threadShutdown&&hDS4Handle != INVALID_HANDLE_VALUE)
-			LogPrintf(L"デバイスがまだ接続されていませんでした。");
+			LogPrintf(I18N.DeviceNotConnected);
 		break;
 	default:
 		if (!m_threadShutdown&&hDS4Handle != INVALID_HANDLE_VALUE)
-			LogPrintf(L"DS4からの受信に失敗しました。  Error:%d (0x%x)", errorcode, errorcode);
+			LogPrintf(I18N.FailedRecv,L"DS4", errorcode);
 		break;
 	}
 	return false;
@@ -437,7 +438,7 @@ bool DS4Device::_parse()
 	}
 
 	if (m_receivedLength < 42) {
-		LogPrintf(L"受信データのサイズが足りませんでした。");
+//		LogPrintf(L"受信データのサイズが足りませんでした。");
 		return false;
 	}
 

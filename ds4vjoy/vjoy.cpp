@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "vjoy.h"
 #include "Log.h"
+#include "Language.h"
 
 vJoyDevice::vJoyDevice()
 {
@@ -29,15 +30,15 @@ vJoyDevice::vJoyDevice()
 bool vJoyDevice::Init(HWND hWnd)
 {
 	if (!vJoyEnabled()) {
-		MessageBox(NULL, L"vjoyをインストールしてください。", L"エラー", MB_OK);
+		MessageBox(NULL, I18N.vJoy_please_install, I18N.MBOX_ErrTitle , MB_OK);
 		return false;
 	}
 	WORD dll, drv;
 	if (DriverMatch(&dll, &drv)) {
-		LogPrintf(L"vJoy version %d.%d.%d", dll >> 8 & 0xF, dll >> 4 & 0xF, dll & 0xF);
+		LogPrintf(I18N.vJoy_version, dll >> 8 & 0xF, dll >> 4 & 0xF, dll & 0xF);
 	}
 	else {
-		LogPrintf(L"vJoyのバージョンが一致していません。DLL(%d.%d.%d) Driver(%d.%d.%d)", dll >> 8 & 0xF, dll >> 4 & 0xF, dll & 0xF, drv >> 8 & 0xF, drv >> 4 & 0xF, drv & 0xF);
+		LogPrintf(I18N.vJoy_version_notmatch, dll >> 8 & 0xF, dll >> 4 & 0xF, dll & 0xF, drv >> 8 & 0xF, drv >> 4 & 0xF, drv & 0xF);
 	}
 
 	return true;
@@ -62,16 +63,16 @@ bool vJoyDevice::Open(int DevID)
 	case VJD_STAT_FREE:
 		break;
 	case VJD_STAT_BUSY:
-		LogPrintf(L"vJoy(ID:%d)はおそらく他所で使われています。", DevID);
+		LogPrintf(I18N.vJoy_busy , DevID);
 		return false;
 	case VJD_STAT_MISS:
 	default:
-		LogPrintf(L"vJoy(ID:%d)は開けません。", DevID);
+		LogPrintf(I18N.vJoy_cantuse , DevID);
 		return false;
 	};
 
 	if (!AcquireVJD(DevID)){
-		LogPrintf(L"vJoy(ID:%d)を開けませんでした。", DevID);
+		LogPrintf(I18N.vJoy_failed_acquire , DevID);
 		return false;
 	}
 
@@ -91,7 +92,7 @@ bool vJoyDevice::Open(int DevID)
 	GetButton(vJoyButton::POV3)->Release();
 	GetButton(vJoyButton::POV4)->Release();
 
-	LogPrintf(L"vJoy(ID:%d)に接続しました。", DevID);
+	LogPrintf(I18N.vJoy_acquire, DevID);
 
 	memcpy(&m_iReportDefault, &m_iReport, sizeof(m_iReport));
 	return Update();
@@ -115,7 +116,7 @@ bool vJoyDevice::Update()
 		return false;
 	}
 	if (!UpdateVJD(m_devID, &m_iReport)){
-		LogPrintf(L"vJoyの操作に失敗しました。");
+		LogPrintf(I18N.vJoy_failed_update);
 		Close();
 		return false;
 	}

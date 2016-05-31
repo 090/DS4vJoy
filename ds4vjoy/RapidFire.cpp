@@ -1,6 +1,6 @@
 ﻿#include "stdafx.h"
 #include "RapidFire.h"
-
+#include "Language.h"
 
 bool RapidFire::LoadDevice(vJoyDevice *vjoy)
 {
@@ -28,9 +28,9 @@ WCHAR * RapidFire::strVal()
 {
 	static WCHAR buf[256];
 	WCHAR *head=buf;
-	head += wsprintf(buf, L"初回:%dms 解放:%dms 押下:%dms", Firsttime, Releasetime, Presstime);
+	head += wsprintf(buf, I18N.Rapidfire_State , Firsttime, Releasetime, Presstime);
 	if (ButtonID2)
-		wsprintf(head, L" (%sが押下なら)", vJoyButton::String(ButtonID2));
+		wsprintf(head, I18N.Rapidfire_if_down , vJoyButton::String(ButtonID2));
 	return buf;
 }
 

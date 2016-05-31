@@ -1,6 +1,6 @@
 ﻿#include "stdafx.h"
 #include "DS4Button.h"
-
+#include "Language.h"
 
 DS4Button::DS4Button():
 	m_data(0),
@@ -178,31 +178,31 @@ WCHAR * DS4Button::String(ButtonID id)
 	switch (id)
 	{
 	case none: return L"";
-	case SQUARE: return L"□";
-	case TRIANGLE: return L"△";
-	case CROSS: return L"×";
-	case CIRCLE: return L"○";
-	case L1: return L"L1";
-	case R1: return L"R1";
-	case L2: return L"L2";
-	case R2: return L"R2";
-	case L3: return L"L3";
-	case R3: return L"R3";
-	case SHARE: return L"SHARE";
-	case OPTIONS: return L"OPTIONS";
-	case PS: return L"PS";
-	case TOUCH: return L"TouchPad";
-	case LX: return L"LX";
-	case LY: return L"LY";
-	case RX: return L"RX";
-	case RY: return L"RY";
-	case L2TRIGGER: return L"L2Trigger";
-	case R2TRIGGER: return L"R2Trigger";
-	case DPAD: return L"十字キー";
-	case DPAD_UP: return L"↑";
-	case DPAD_RIGHT: return L"→";
-	case DPAD_DOWN: return L"↓";
-	case DPAD_LEFT: return L"←";
+	case SQUARE: return I18N.Button_SQUARE;
+	case TRIANGLE: return I18N.Button_TRIANGLE;
+	case CROSS: return I18N.Button_CROSS;
+	case CIRCLE: return I18N.Button_CIRCLE;
+	case L1: return I18N.Button_L1;
+	case R1: return I18N.Button_R1;
+	case L2: return I18N.Button_L2;
+	case R2: return I18N.Button_R2;
+	case L3: return I18N.Button_L3;
+	case R3: return I18N.Button_R3;
+	case SHARE: return I18N.Button_SHARE;
+	case OPTIONS: return I18N.Button_OPTIONS;
+	case PS: return I18N.Button_PS;
+	case TOUCH: return I18N.Button_TOUCH;
+	case LX: return I18N.Button_LX;
+	case LY: return I18N.Button_LY;
+	case RX: return I18N.Button_RX;
+	case RY: return I18N.Button_RY;
+	case L2TRIGGER: return I18N.Button_L2TRIGGER;
+	case R2TRIGGER: return I18N.Button_R2TRIGGER;
+	case DPAD: return I18N.Button_DPAD;
+	case DPAD_UP: return I18N.Button_DPAD_UP;
+	case DPAD_RIGHT: return I18N.Button_DPAD_RIGHT;
+	case DPAD_DOWN: return I18N.Button_DPAD_DOWN;
+	case DPAD_LEFT: return I18N.Button_DPAD_LEFT;
 	default: return L"???";
 	}
 }

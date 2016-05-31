@@ -3,6 +3,7 @@
 #include "Settings.h"
 #include "MappingDlg.h"
 #include "MappingDataDlg.h"
+#include "Language.h"
 
 MappingDlg::MappingDlg()
 	:m_dragflag(false)
@@ -31,9 +32,9 @@ void MappingDlg::Init(HINSTANCE hInst, HWND hWnd)
 	col.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
 	col.fmt = LVCFMT_LEFT;
 	col.cx = 200;
-	col.pszText = L"DS4 Button";
+	col.pszText = I18N.DS4Button;
 	ListView_InsertColumn(m_hList, 0, &col);
-	col.pszText = L"vJoy Button";
+	col.pszText = I18N.vJoyButton;
 	col.cx = 200;
 	ListView_InsertColumn(m_hList, 1, &col);
 	m_hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_MENU_MAPPING));
@@ -194,7 +195,7 @@ void MappingDlg::save()
 {
 	m_active = false;
 	if (m_change) {
-		if (MessageBox(m_hDlg, L"マッピングの変更を保存しますか？", L"確認", MB_YESNO) != IDYES) {
+		if (MessageBox(m_hDlg,I18N.MBOX_Save, I18N.APP_TITLE, MB_YESNO) != IDYES) {
 			m_change = false;
 		}
 	}
@@ -348,7 +349,7 @@ void MappingDlg::editMappingDataDlg()
 
 void MappingDlg::deleteMappingData()
 {
-	if (MessageBox(m_hDlg, L"選択項目を削除しますか？", L"確認", MB_YESNO) == IDYES) {
+	if (MessageBox(m_hDlg,I18N.MBOX_Delete, I18N.APP_TITLE , MB_YESNO) == IDYES) {
 		int idx;
 		while ((idx = ListView_GetNextItem(m_hList, -1, LVNI_SELECTED)) != -1) {
 			LV_ITEM item = { 0 };

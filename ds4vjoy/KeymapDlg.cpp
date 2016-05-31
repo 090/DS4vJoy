@@ -3,6 +3,7 @@
 #include "Settings.h"
 #include "KeymapDlg.h"
 #include "KeymapDataDlg.h"
+#include "Language.h"
 
 KeymapDlg::KeymapDlg()
 {
@@ -150,7 +151,7 @@ void KeymapDlg::save()
 {
 	m_active = false;
 	if (m_change) {
-		if (MessageBox(m_hWnd, L"キーマップの変更を保存しますか？", L"確認", MB_YESNO) != IDYES) {
+		if (MessageBox(m_hWnd, I18N.MBOX_Save , I18N.APP_TITLE , MB_YESNO) != IDYES) {
 			m_change = false;
 		}
 	}
@@ -248,7 +249,7 @@ bool KeymapDlg::editKeymapDlg()
 
 bool KeymapDlg::deleteKeymap()
 {
-	if (MessageBox(m_hDlg, L"選択項目を削除しますか？", L"確認", MB_YESNO) == IDYES) {
+	if (MessageBox(m_hDlg, I18N.MBOX_Delete, I18N.APP_TITLE, MB_YESNO) == IDYES) {
 		int idx;
 		while ((idx = ListView_GetNextItem(m_hList, -1, LVNI_SELECTED)) != -1) {
 			LV_ITEM item = { 0 };

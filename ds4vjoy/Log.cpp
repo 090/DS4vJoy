@@ -13,9 +13,9 @@ void LogPrintf(const wchar_t *format, ...){
 	int len;
 	wchar_t * buffer;
 	va_start(args, format);
-	len = _vscwprintf(format, args)+ 1;
+	len = _vscwprintf_p(format, args)+ 1;
 	buffer = (wchar_t *)malloc(len * sizeof(wchar_t));
-	vswprintf_s(buffer, len, format, args);
+	_vswprintf_p(buffer, len, format, args);
 
 	if (g_hWnd) {
 		{

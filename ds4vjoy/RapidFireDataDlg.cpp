@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "resource.h"
 #include "RapidFireDataDlg.h"
+#include "Language.h"
 
 RapidFireDataDlg::RapidFireDataDlg()
 {
@@ -55,7 +56,7 @@ INT_PTR RapidFireDataDlg::_proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		{
 		case IDOK: {
 			if (rapidFireData.ButtonID == 0 ) {
-				MessageBox(hWnd, L"ボタンが選択されていません。", L"エラー", MB_ICONERROR);
+				MessageBox(hWnd, I18N.MBOX_NoButtonSelected, I18N.MBOX_ErrTitle, MB_ICONERROR);
 				return TRUE;
 			}
 			rapidFireData.Enable = true;

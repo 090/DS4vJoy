@@ -93,6 +93,9 @@
     <ClInclude Include="ffb\effect.h">
       <Filter>ffb</Filter>
     </ClInclude>
+    <ClInclude Include="Language.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -160,6 +163,9 @@
     </ClCompile>
     <ClCompile Include="ffb\effect.cpp">
       <Filter>ffb</Filter>
+    </ClCompile>
+    <ClCompile Include="Language.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

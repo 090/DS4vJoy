@@ -4,6 +4,7 @@
 #include "Startup.h"
 #include "Settings.h"
 #include "SettingDlg.h"
+#include "Language.h"
 
 SettingDlg::SettingDlg()
 {
@@ -58,7 +59,7 @@ INT_PTR SettingDlg::_proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		}
 		else if(m_changeflag){
-			if (MessageBox(hWnd, L"変更を保存しますか？", L"確認", MB_YESNO) == IDYES) {
+			if (MessageBox(hWnd, I18N.MBOX_Save , I18N.APP_TITLE , MB_YESNO) == IDYES) {
 				g_settings.DisconnectBT = BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_DISCONNECT_BT), BM_GETCHECK, 0, 0);
 				g_settings.SplitTouchPad = BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_TOUCHPAD), BM_GETCHECK, 0, 0);
 				g_settings.FFB = BST_CHECKED == SendMessage(GetDlgItem(hWnd, IDC_FFB), BM_GETCHECK, 0, 0);

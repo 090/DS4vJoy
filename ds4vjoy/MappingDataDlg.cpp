@@ -3,6 +3,7 @@
 #include "DS4Button.h"
 #include "vJoyButton.h"
 #include "MappingDataDlg.h"
+#include "Language.h"
 
 MappingDataDlg::MappingDataDlg()
 {
@@ -58,7 +59,7 @@ INT_PTR MappingDataDlg::_proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		{
 		case IDOK: {
 			if (mappingData.DS4ID[0] == 0 || mappingData.vJoyID == 0) {
-				MessageBox(hWnd, L"対応するボタンが選択されていません。", L"エラー", MB_ICONERROR);
+				MessageBox(hWnd, I18N.MBOX_NoButtonSelected, I18N.MBOX_ErrTitle , MB_ICONERROR);
 				return TRUE;
 			}
 			int offset = 1;

@@ -192,6 +192,7 @@
     <ClInclude Include="Keymap.h" />
     <ClInclude Include="KeymapDataDlg.h" />
     <ClInclude Include="KeymapDlg.h" />
+    <ClInclude Include="Language.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="Mapping.h" />
     <ClInclude Include="MappingDataDlg.h" />
@@ -221,6 +222,7 @@
     <ClCompile Include="Keymap.cpp" />
     <ClCompile Include="KeymapDataDlg.cpp" />
     <ClCompile Include="KeymapDlg.cpp" />
+    <ClCompile Include="Language.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="Mapping.cpp" />
     <ClCompile Include="MappingDataDlg.cpp" />

@@ -17,6 +17,7 @@
 #include "MappingDlg.h"
 #include "KeymapDlg.h"
 #include "RapidFireDlg.h"
+#include "Language.h"
 
 #define MAX_LOADSTRING 100
 
@@ -259,6 +260,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
 	case WM_CREATE:
+		LoadLanguage();
 		InitCommonControls();
 		g_settings.OpenIni(L"ds4vjoy.ini");
 		g_settings.Load();
@@ -275,15 +277,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			hTab = CreateWindowEx(0, WC_TABCONTROL, NULL, WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE | TCS_RIGHTJUSTIFY, 0, 0, 10, 10, hWnd, (HMENU)ID_TABMENU, hInst, NULL);
 			TCITEM tc_item;
 			tc_item.mask = TCIF_TEXT;
-			tc_item.pszText = L"Log";
+			tc_item.pszText = I18N.tabLog;
 			TabCtrl_InsertItem(hTab, 0, &tc_item);
-			tc_item.pszText = L"Settings";
+			tc_item.pszText = I18N.tabSettings;
 			TabCtrl_InsertItem(hTab, 1, &tc_item);
-			tc_item.pszText = L"Mapping";
+			tc_item.pszText = I18N.tabMapping;
 			TabCtrl_InsertItem(hTab, 2, &tc_item);
-			tc_item.pszText = L"RapidFire";
+			tc_item.pszText = I18N.tabRapidfire;
 			TabCtrl_InsertItem(hTab, 3, &tc_item);
-			tc_item.pszText = L"Keymap";
+			tc_item.pszText = I18N.tabKeymap;
 			TabCtrl_InsertItem(hTab, 4, &tc_item);
 		}
 
@@ -292,10 +294,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			hStatus = CreateStatusWindow(WS_CHILD | WS_VISIBLE | CCS_BOTTOM | SBARS_SIZEGRIP, NULL, hWnd, ID_STATUS);
 			int width[3] = { 100,200,-1 };
 			SendMessage(hStatus, SB_SETPARTS, 3, (LPARAM)width);
-			SendMessage(hStatus, SB_SETTEXT, 0 | 0, (WPARAM)L"待機");
+			SendMessage(hStatus, SB_SETTEXT, 0 | 0, (WPARAM)I18N.status_wait);
 		}
 
-		LogPrintf(L"DS4vJoy Ver1.1");
+		LogPrintf(L"https://github.com/090/DS4vJoy Ver1.2");
 
 		//vjoy初期化
 		if (!vjoy.Init(hWnd)) {
@@ -304,9 +306,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		//デバイスオープン
 		if (!SendMessage(hWnd, WM_DEVICE_VJOY_START, 0, 0)) {
-			LogPrintf(L"有効なvJoyデバイスが見つかるまで待機しています。");
+			LogPrintf(I18N.log_wait_vjoy);
 		}else if (!SendMessage(hWnd, WM_DEVICE_DS4_START, 0, 0)) {
-			LogPrintf(L"有効なDS4が見つかるまで待機しています。");
+			LogPrintf(I18N.log_wait_ds4);
 		}
 
 		//デバイスのチェック間隔
@@ -326,8 +328,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		else if (wParam == 2) {
 
-			TCHAR buf[20];
 			if (ds4.Active()) {
+				TCHAR buf[20];
 				if (ds4.isBT()) {
 					wsprintf(buf, TEXT("BT(%d%%)"), ds4.Battery() * 10);
 				}
@@ -339,7 +341,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				SendMessage(hStatus, SB_SETTEXT, 1, (WPARAM)buf);
 			}
 			else {
-				SendMessage(hStatus, SB_SETTEXT, 0 | 0, (WPARAM)L"未接続");
+				SendMessage(hStatus, SB_SETTEXT, 0 | 0, (WPARAM)I18N.status_wait);
 				SendMessage(hStatus, SB_SETTEXT, 1 | 0, (WPARAM)L"");
 			}
 			if (ledcolor != g_settings.LED_Color) {
@@ -441,7 +443,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_CHANGE_SETTING:
 		if (ds4.Active()) {
-			LogPrintf(L"設定変更のため再接続します。");
+			LogPrintf(I18N.log_change_settings);
 		}
 		SendMessage(hWnd, WM_DEVICE_VJOY_START, 0, 0);
 		SendMessage(hWnd, WM_DEVICE_DS4_START, 0, 0);
@@ -522,6 +524,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ds4.DisconnectBT();
 		ds4.Close();
 		vjoy.Close();
+		FreeLanguage();
         PostQuitMessage(0);
         break;
 	case WM_LOGNEW:
