@@ -55,33 +55,68 @@ void Settings::Load()
 			if (value == 0)
 				break;
 			*value++ = 0;
-			Keymap _keymap;
-			int btnid = _wtoi(key);
-			if (btnid <= vJoyButtonID::none || btnid >= vJoyButtonID::button_Count )
-				break;
-			_keymap.ButtonID = (vJoyButtonID)btnid;
-
-			key = value;
-			value = wcschr(key, L',');
-			if (value == 0)
-				break;
-			*value++ = 0;
-			if( _wtoi(key) != 0){
-				_keymap.Enable=true;
+			if (_wcsnicmp(key, L"usepm", 5) == 0) {
+				int btnid = _wtoi(key + 5);
+				if (btnid <= vJoyButtonID::none || btnid >= vJoyButtonID::button_Count) {
+					key = head;
+					continue;
+				}
+				if (_wcsnicmp(value, L"1", 1) == 0) {
+					for (Keymap& km : Keymapdata) {
+						if (km.ButtonID == btnid) {
+							km.usePostmessage = true;
+							break;
+						}
+					}
+				}
 			}
-			for (int i = 0; i < KEYMAP_MAX_KEYS; i++) {
+			else if (_wcsnicmp(key, L"fw", 2) == 0) {
+				int btnid = _wtoi(key + 2);
+				if (btnid <= vJoyButtonID::none || btnid >= vJoyButtonID::button_Count) {
+					key = head;
+					continue;
+				}
+				if (wcslen(value) > 0) {
+					for (Keymap& km : Keymapdata) {
+						if (km.ButtonID == btnid) {
+							km.findWindow.Val( value );
+							break;
+						}
+					}
+				}
+			}
+			else
+			{
+				Keymap _keymap;
+				int btnid = _wtoi(key);
+				if (btnid <= vJoyButtonID::none || btnid >= vJoyButtonID::button_Count) {
+					key = head;
+					continue;
+				}
+				_keymap.ButtonID = (vJoyButtonID)btnid;
+
 				key = value;
 				value = wcschr(key, L',');
-				if(value != 0)
-					*value++ = 0;
-				int _vk = _wtoi(key);
-				if (_vk <= 0 || _vk >= 0x100)
-					break;
-				_keymap.vk.push_back( (BYTE)_vk);
 				if (value == 0)
 					break;
+				*value++ = 0;
+				if (_wtoi(key) != 0) {
+					_keymap.Enable = true;
+				}
+				for (int i = 0; i < KEYMAP_MAX_KEYS; i++) {
+					key = value;
+					value = wcschr(key, L',');
+					if (value != 0)
+						*value++ = 0;
+					int _vk = _wtoi(key);
+					if (_vk <= 0 || _vk >= 0x100)
+						break;
+					_keymap.vk.push_back((BYTE)_vk);
+					if (value == 0)
+						break;
+				}
+				Keymapdata.push_back(std::move(_keymap));
 			}
-			Keymapdata.push_back( std::move(_keymap) );
 			key = head;
 		}
 	}
@@ -220,6 +255,12 @@ void Settings::Save()
 				break;
 			head += wsprintf(head, L"%d,", *itr);
 		}
+		head++;
+		if (_keymap->usePostmessage) {
+			head += wsprintf(head, L"usePM%d=1", _keymap->ButtonID);
+			head++;
+		}
+		head += wsprintf(head, L"fw%d=%s", _keymap->ButtonID, _keymap->findWindow.Val().c_str());
 		head++;
 	}
 	WritePrivateProfileSection(L"Keymap", buf, m_file);

@@ -129,7 +129,10 @@ bool DS4Device::Open()
 		if (!HidD_GetAttributes(hDS4Handle, &Attributes)) {
 			continue;
 		}
-		if (DS4_VenderID != Attributes.VendorID || DS4_ProductID != Attributes.ProductID) {
+		if (DS4_VenderID != Attributes.VendorID) {
+			continue;
+		}
+		if (0x5C4 != Attributes.ProductID && 0x9CC != Attributes.ProductID && 0xBA0 != Attributes.ProductID) {
 			continue;
 		}
 

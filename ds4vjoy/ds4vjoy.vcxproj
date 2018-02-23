@@ -148,7 +148,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /r "..\SDK\lib\vjoyinterface.dll" "$(OutDir)"
-"\Program Files\7-Zip\7z" a -mx=9 "$(SolutionDir)$(TargetName)_$(PlatformTarget).zip" "$(OutDir)*.exe" "$(OutDir)*.ini" "$(OutDir)*.dll"
+"c:\Program Files\7-Zip\7z" a -mx=9 "$(SolutionDir)$(TargetName)_$(PlatformTarget).zip" "$(OutDir)*.exe" "$(OutDir)*.ini" "$(OutDir)*.dll"
 </Command>
     </PostBuildEvent>
     <Manifest>
@@ -175,7 +175,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /r "..\SDK\lib\amd64\vjoyinterface.dll" "$(OutDir)"
-"\Program Files\7-Zip\7z" a -mx=9 "$(SolutionDir)$(TargetName)_$(PlatformTarget).zip" "$(OutDir)*.exe" "$(OutDir)*.ini" "$(OutDir)*.dll"
+"c:\Program Files\7-Zip\7z" a -mx=9 "$(SolutionDir)$(TargetName)_$(PlatformTarget).zip" "$(OutDir)*.exe" "$(OutDir)*.ini" "$(OutDir)*.dll"
 </Command>
     </PostBuildEvent>
     <Manifest>
@@ -189,6 +189,8 @@
     <ClInclude Include="ds4vjoy.h" />
     <ClInclude Include="FFB.h" />
     <ClInclude Include="ffb\effect.h" />
+    <ClInclude Include="Findwindow.h" />
+    <ClInclude Include="FindwindowDlg.h" />
     <ClInclude Include="Keymap.h" />
     <ClInclude Include="KeymapDataDlg.h" />
     <ClInclude Include="KeymapDlg.h" />
@@ -219,6 +221,8 @@
     <ClCompile Include="ffb\effect.cpp">
       <PrecompiledHeaderFile>..\stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="Findwindow.cpp" />
+    <ClCompile Include="FindwindowDlg.cpp" />
     <ClCompile Include="Keymap.cpp" />
     <ClCompile Include="KeymapDataDlg.cpp" />
     <ClCompile Include="KeymapDlg.cpp" />

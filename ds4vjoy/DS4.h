@@ -1,7 +1,6 @@
 ﻿#pragma once
 
-#define DS4_VenderID 0x54C
-#define DS4_ProductID 0x5C4
+#define DS4_VenderID 0x054C
 #define MAX_Serial_Length 127
 #define MAX_Input_Length 10+8
 #define DS4_Latency_Count 100

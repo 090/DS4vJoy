@@ -34,10 +34,19 @@ void Tasktray::Hide()
 
 }
 
+void Tasktray::Tip(WCHAR * buf)
+{
+	if (!m_flag)
+		return;
+	lstrcpyW(m_nid.szTip, buf);
+	Shell_NotifyIcon(NIM_MODIFY, &m_nid);
+}
+
 void Tasktray::Message(WPARAM wParam, LPARAM lParam)
 {
 	if (wParam == 1 && lParam == WM_LBUTTONDBLCLK) {
 		ShowWindow(m_hWnd, SW_SHOWNORMAL);
+		SetForegroundWindow(m_hWnd);
 	}
 }
 

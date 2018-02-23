@@ -240,6 +240,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	static RapidFireDlg rDlg;
 	static KeymapDlg kDlg;
 	static DS4cbParams cbParams;
+	static int iBattery=-1;
     switch (message)
     {
     case WM_COMMAND:
@@ -297,7 +298,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SendMessage(hStatus, SB_SETTEXT, 0 | 0, (WPARAM)I18N.status_wait);
 		}
 
-		LogPrintf(L"https://github.com/090/DS4vJoy Ver1.2");
+		LogPrintf(L"https://github.com/090/DS4vJoy Ver1.3");
 
 		//vjoy初期化
 		if (!vjoy.Init(hWnd)) {
@@ -330,11 +331,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			if (ds4.Active()) {
 				TCHAR buf[20];
+				int battery = ds4.Battery();
 				if (ds4.isBT()) {
-					wsprintf(buf, TEXT("BT(%d%%)"), ds4.Battery() * 10);
+					wsprintf(buf, TEXT("BT(%d%%)"), battery * 10);
+					battery += 1;
 				}
 				else {
-					wsprintf(buf, TEXT("USB(%d%%)"), ds4.Battery() * 10);
+					wsprintf(buf, TEXT("USB(%d%%)"), battery * 10);
+					battery += 2;
+				}
+				if (battery != iBattery) {
+					iBattery = battery;
+					tasktray.Tip(buf);
 				}
 				SendMessage(hStatus, SB_SETTEXT, 0, (WPARAM)buf);
 				swprintf_s(buf, TEXT("%0.2fms"), cbParams.sw.GetAvg());

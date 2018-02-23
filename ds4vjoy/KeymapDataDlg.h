@@ -15,6 +15,7 @@ private:
 	INT_PTR CALLBACK _proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	INT_PTR CALLBACK _inputProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void initdialog();
+
 	HWND m_hWnd;
 	HWND m_hDlg;
 	WNDPROC m_defaultInputProc;

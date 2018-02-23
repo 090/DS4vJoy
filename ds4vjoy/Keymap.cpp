@@ -230,6 +230,35 @@ void Keymap::keyup()
 	m_keydownflag = false;
 }
 
+
+
+void Keymap::keydownPM()
+{
+	size_t max = vk.size();
+	for (int count = 0; count < max; count++) {
+		if (postmessageTarget == NULL || PostMessage(postmessageTarget, WM_KEYDOWN, vk[count], 0) == 0) {
+			postmessageTarget = findWindow.Find();
+			if (postmessageTarget==NULL || PostMessage(postmessageTarget, WM_KEYDOWN, vk[count], 0) == 0) {
+				break;
+			}
+		}
+	}
+	m_keydownflag = true;
+}
+
+void Keymap::keyupPM()
+{
+	for (int n = (int)vk.size() - 1; n >= 0; n--) {
+		if (postmessageTarget == NULL || PostMessage(postmessageTarget, WM_KEYUP, vk[n], 0) == 0) {
+			postmessageTarget = findWindow.Find();
+			if (postmessageTarget == NULL || PostMessage(postmessageTarget, WM_KEYUP, vk[n], 0) == 0) {
+				break;
+			}
+		}
+	}
+	m_keydownflag = false;
+}
+
 Keymap::Keymap()
 	:m_button(0)
 {
@@ -249,13 +278,24 @@ bool Keymap::Run()
 {
 	if (m_button == 0)
 		return false;
+
 	if (m_keydownflag) {
 		if (!m_button->isPushed()) {
-			keyup();
+			if (usePostmessage) {
+				keyupPM();
+			}
+			else {
+				keyup();
+			}
 		}
 	}
 	else if (m_button->isPushed()) {
-		keydown();
+		if (usePostmessage) {
+			keydownPM();
+		}
+		else {
+			keydown();
+		}
 		return true;
 	}
 	return false;
