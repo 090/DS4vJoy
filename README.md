@@ -5,11 +5,11 @@ DualShock 4 to vJoy for Windows
 ## これなに
 仮想ジョイスティックのvJoyを経由することでDS4を簡単に使えます。  
 
-- 日本語対応！
-- 振動簡易対応！
+- 日本語対応！英語対応！
+- 振動対応！
 - 連射対応！
 - タッチパッド分割対応！
-- キーボード入力対応！(SendInput)
+- キーボード入力対応！(SendInput、PostMessage)
 - Bluetooth対応！
 
 ## つかいかた
@@ -31,7 +31,6 @@ Monitor vJoyを起動すれば、どのボタンが押されているか確認�
 
 ## デメリット
 - PCにvJoyをインストールしないと使えません。
-- 振動機能がしょぼいです。
 
 ## スクリーンショット
 - ![Setting](doc/ssSetting.png)
@@ -41,7 +40,7 @@ vJoyデバイスは15個まで選択できますが、実用的なのはたぶ�
 - ![Mapping](doc/ssMapping.png)![Mapping](doc/ssMapping2.png)
 - マッピングでDS4のボタンをvJoyのボタンに割り当てる設定をします。
 例えばL2やR2が押された場合ボタン15を有効にします。  
-強制的 - L2Triggerやスティックなど、触れていない状態にも意味のある時に使います。  
+強制的 - L2Triggerやスティックなど、触れていない状態にも意味のある時にだけ使います。  
 トグル - on/offスイッチのように押し続けている状態が作れます。
 - ![Repeat](doc/ssRapidFire.png)![Repeat](doc/ssRapidFire2.png)
 - 割り当てたvJoyのボタンで連打を設定できます。  
@@ -49,9 +48,9 @@ vJoyデバイスは15個まで選択できますが、実用的なのはたぶ�
 同時押し条件を指定すると、たとえばL2やR2が押されている場合のみ、十字キーと□△×○の連打を有効にすることもできます。
 - ![Keymap](doc/ssKeymap.png)![Keymap](doc/ssKeymap2.png)
 - ボタンが押されたらキーダウンを、離されたらキーアップを送信できます。
-
+- ![FindWindow](doc/ssKeymap3.png)
+- 特定プロセスの特定場所にPostMessageで送信することもできます。
 ## 予定
-- 振動機能の強化
 - バッテリー低下の時の警告
 
 ## Thanks
@@ -60,6 +59,6 @@ vJoyデバイスは15個まで選択できますが、実用的なのはたぶ�
 - http://mclab.uunyan.com/lab/ds4/ds4_005.htm
 
 ## 開発環境
-- Win7 64bit + Visual Studio 2015
-- DUALSHOCK®4 CUH-ZCT1J01
+- Win10 64bit + Visual Studio 2015
+- DUALSHOCK®4 CUH-ZCT1J01、CUH-ZCT2J
 - IO-DATA USB-BT40LE
